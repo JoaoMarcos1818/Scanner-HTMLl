@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Scanner NF Ultra Pro</title>
-    <!-- ZXing Library (Link Corrigido e Otimizado) -->
+    <!-- ZXing Library -->
     <script src="https://unpkg.com/@zxing/library@0.20.0"></script>
     
     <style>
@@ -799,14 +799,14 @@
 
     <script>
         /**
-         * SCANNER NF ULTRA PRO - FINAL VERSION
-         * Syntax Fixed, Logic Optimized, Crash Prevention Added
+         * SCANNER NF ULTRA PRO - VERSÃO FINAL (LEITURA FIXA)
+         * Correção: Smart Crop (Recorte Central) e Foco Automático.
          */
 
         const Config = {
             MAX_STORAGE: 1500,
             SCAN_COOLDOWN: 500, 
-            STORAGE_KEY: 'notas-fiscais-ultra-v3'
+            STORAGE_KEY: 'notas-fiscais-ultra-v4'
         };
 
         const State = {
@@ -891,9 +891,7 @@
                         const parsed = JSON.parse(saved);
                         if (Array.isArray(parsed)) State.notas = parsed;
                     }
-                } catch (e) {
-                    console.error("Storage Load Error", e);
-                }
+                } catch (e) { console.error("Storage Error", e); }
             },
 
             save: () => {
@@ -902,9 +900,7 @@
                         State.notas = State.notas.slice(0, Config.MAX_STORAGE);
                     }
                     localStorage.setItem(Config.STORAGE_KEY, JSON.stringify(State.notas));
-                } catch (e) {
-                    Utils.showToast("Memória cheia", "error");
-                }
+                } catch (e) { Utils.showToast("Memória cheia", "error"); }
             },
 
             addNote: (key) => {
@@ -950,7 +946,6 @@
                 const unique = [];
                 const seen = new Set();
                 let removed = 0;
-                
                 State.notas.forEach(n => {
                     if (seen.has(n.chave)) removed++;
                     else {
@@ -958,7 +953,6 @@
                         unique.push(n);
                     }
                 });
-
                 if (removed > 0) {
                     State.notas = unique;
                     DataManager.save();
@@ -1003,13 +997,11 @@
                     let msg = "Nenhuma nota fiscal";
                     let sub = "Inicie o scanner";
                     let icon = "⚡";
-                    
                     if (State.notas.length > 0) {
                         msg = "Nenhuma nota neste filtro";
                         sub = "Mude os filtros";
                         icon = "🔍";
                     }
-
                     container.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-icon">${icon}</div>
@@ -1023,7 +1015,6 @@
                 filtered.forEach(n => {
                     const card = document.createElement('div');
                     card.className = `nota-card ${n.copiada ? 'status-copied' : ''}`;
-                    
                     card.innerHTML = `
                         <div class="check-circle ${n.copiada ? 'checked' : ''}" onclick="DataManager.toggleStatus(${n.id})">
                             <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
@@ -1048,7 +1039,7 @@
         };
 
         // =========================================
-        // SCANNER MODULE (CORRIGIDO E ROBUSTO)
+        // SCANNER MODULE (FIXADO: SMART CROP)
         // =========================================
         const Scanner = {
             stream: null,
@@ -1058,21 +1049,22 @@
             lastScanTime: 0,
 
             start: async () => {
-                // Verifica se a biblioteca carregou
                 if (typeof ZXing === 'undefined') {
-                    alert("Erro crítico: Biblioteca ZXing não carregou. Verifique sua conexão.");
+                    alert("Biblioteca não carregada. Verifique sua internet.");
                     return;
                 }
-
                 if (State.scanSession.active) return;
                 
                 UI.loader.classList.add('active');
 
                 try {
-                    // Constraints seguras (sem ideal HD)
+                    // 1. Define constraints: 720p é ideal para ZXing (rapidez e nitidez)
+                    // Adiciona focusMode para tentar forçar foco (Android/iOS)
                     const constraints = {
                         video: {
-                            facingMode: 'environment'
+                            facingMode: 'environment',
+                            width: { ideal: 1280 }, 
+                            height: { ideal: 720 }
                         },
                         audio: false
                     };
@@ -1081,18 +1073,15 @@
                     try {
                         stream = await navigator.mediaDevices.getUserMedia(constraints);
                     } catch (errEnv) {
-                        // Fallback para qualquer câmera
+                        console.warn("HD falhou, tentando básico...");
                         stream = await navigator.mediaDevices.getUserMedia({ video: true });
                     }
 
                     Scanner.stream = stream;
                     UI.video.srcObject = Scanner.stream;
-                    
-                    // Obrigatório para autoplay no Mobile
                     UI.video.setAttribute('playsinline', '');
                     UI.video.setAttribute('muted', '');
                     
-                    // Garante que o vídeo carregou
                     UI.video.onloadedmetadata = () => {
                         UI.video.play()
                             .then(() => {
@@ -1107,46 +1096,38 @@
                                 
                                 Scanner.codeReader = new ZXing.BrowserQRCodeReader();
                                 Scanner.loop();
-                                Utils.showToast("🔥 Modo Turbo Ativado", "success");
+                                Utils.showToast("🔥 Scanner Ativado", "success");
                             })
                             .catch(e => {
-                                console.error(e);
                                 UI.loader.classList.remove('active');
-                                alert("Erro ao iniciar vídeo. Tente fechar outros apps que usam a câmera.");
+                                alert("Erro ao iniciar vídeo.");
                             });
                     };
 
                 } catch (err) {
                     console.error(err);
                     UI.loader.classList.remove('active');
-                    let msg = "Erro ao acessar câmera.";
-                    if (err.name === 'NotAllowedError') msg = "Permissão negada.";
-                    else if (err.name === 'NotFoundError') msg = "Câmera não encontrada.";
-                    else if (location.protocol !== 'https:') msg = "Erro de Segurança (HTTPS).";
+                    let msg = "Erro de Câmera.";
+                    if (err.name === 'NotAllowedError') msg = "Permissão Negada.";
+                    else if (location.protocol !== 'https:') msg = "Erro: Necessário HTTPS.";
                     alert(msg);
                 }
             },
 
             stop: () => {
                 State.scanSession.active = false;
-                
                 if (Scanner.stream) {
                     Scanner.stream.getTracks().forEach(track => track.stop());
                     Scanner.stream = null;
                 }
-                
                 if (Scanner.rafId) cancelAnimationFrame(Scanner.rafId);
-                
                 if (Scanner.codeReader) {
                     try { Scanner.codeReader.reset(); } catch(e){}
                     Scanner.codeReader = null;
                 }
-
                 UI.video.srcObject = null;
-                
                 UI.scannerUI.classList.remove('active');
                 UI.mainContent.style.display = 'flex';
-                
                 App.render();
             },
 
@@ -1157,17 +1138,33 @@
                 const canvas = UI.canvas;
                 const ctx = canvas.getContext('2d');
 
-                // Segurança: Só desenha se o vídeo tiver tamanho
                 if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
+                    
+                    // =========================================
+                    // FIX DE LEITURA: SMART CROP (RECORTE CENTRAL)
+                    // =========================================
+                    // Em vez de ler a imagem gigante (ex: 1920x1080), recortamos um quadrado no centro.
+                    // Isso garante que o ZXing foque apenas na área onde a caixa está.
+                    
+                    // Define o tamanho do recorte (a menor dimensão do vídeo)
+                    const size = Math.min(video.videoWidth, video.videoHeight);
+                    
+                    // Calcula a posição inicial (para centralizar)
+                    const sx = (video.videoWidth - size) / 2;
+                    const sy = (video.videoHeight - size) / 2;
+
+                    // Ajusta o canvas para esse tamanho quadrado
+                    canvas.width = size;
+                    canvas.height = size;
+
+                    // Desenha APENAS a parte central do vídeo no canvas
+                    ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
+
+                    // =========================================
                     
                     try {
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        
-                        // Prevenção de Crash: Wrap da decodificação
                         if (Scanner.codeReader) {
-                            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            const imageData = ctx.getImageData(0, 0, size, size);
                             const result = Scanner.codeReader.decodeFromImageData(imageData);
                             
                             if (result && result.text) {
@@ -1193,7 +1190,7 @@
                             }
                         }
                     } catch (e) {
-                        // Ignora erros de frame vazio ou decodificação falha
+                        // Ignora erros de frame sem código
                     }
                 }
 
@@ -1204,7 +1201,6 @@
                 const times = State.scanSession.times;
                 times.push(now);
                 if (times.length > 10) times.shift();
-
                 if (times.length > 1) {
                     const durationMin = (times[times.length - 1] - times[0]) / 1000 / 60;
                     if (durationMin > 0) {
@@ -1216,20 +1212,15 @@
             }
         };
 
-        // =========================================
-        // PREVENÇÃO DE ERROS DE BATERIA
-        // =========================================
+        // PREVENÇÃO DE BATERIA
         document.addEventListener('visibilitychange', () => {
             if (document.hidden && State.scanSession.active) {
-                // Pausa o scanner se o usuário sair da aba para economizar bateria
                 Scanner.stop();
                 Utils.showToast("Scanner pausado", "info");
             }
         });
 
-        // =========================================
         // MODAL & APP
-        // =========================================
         const Modal = {
             openManual: () => {
                 UI.manualInput.value = '';
@@ -1237,9 +1228,7 @@
                 document.getElementById('modal-manual').classList.add('active');
                 setTimeout(() => UI.manualInput.focus(), 100);
             },
-            close: () => {
-                document.getElementById('modal-manual').classList.remove('active');
-            },
+            close: () => { document.getElementById('modal-manual').classList.remove('active'); },
             onInput: (el) => {
                 el.value = el.value.replace(/\D/g, '');
                 Modal.updateCharCount();
@@ -1269,16 +1258,13 @@
             init: () => {
                 DataManager.load();
                 App.render();
-                
                 document.getElementById('modal-manual').addEventListener('click', (e) => {
                     if (e.target.id === 'modal-manual') Modal.close();
                 });
-
                 UI.manualInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') Modal.submit();
                 });
             },
-
             setFilter: (filterType) => {
                 State.filter = filterType;
                 document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -1287,12 +1273,10 @@
                 });
                 App.render();
             },
-
             render: () => {
                 Renderer.updateStats();
                 Renderer.renderList();
             },
-
             copyOne: async (key, id) => {
                 try {
                     await navigator.clipboard.writeText(key);
@@ -1302,7 +1286,6 @@
                     Utils.showToast("Erro ao copiar", "error");
                 }
             },
-
             copyAll: async () => {
                 if (State.notas.length === 0) return;
                 const allKeys = State.notas.map(n => n.chave).join('\n');
@@ -1313,7 +1296,6 @@
                     Utils.showToast("Erro ao copiar", "error");
                 }
             },
-
             exportData: () => {
                 if (State.notas.length === 0) return;
                 const textContent = State.notas.map(n => n.chave).join('\n');
@@ -1328,7 +1310,6 @@
                 URL.revokeObjectURL(url);
                 Utils.showToast("Arquivo gerado!", "success");
             },
-
             clearAll: DataManager.clearAll,
             removeDuplicates: DataManager.removeDuplicates
         };
