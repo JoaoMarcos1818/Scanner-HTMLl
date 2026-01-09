@@ -6,13 +6,13 @@
     <meta name="theme-color" content="#667eea">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Scanner NF Ultra Pro - Ultimate</title>
-    <!-- jsQR Library (Motor de leitura mais rápido e preciso para Web) -->
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <title>Scanner NF Ultra Pro - ZXing Edition</title>
+    <!-- ZXing Library (Motor de leitura ZXing) -->
+    <script src="https://unpkg.com/@zxing/library@0.20.0"></script>
     
     <style>
         /* =========================================
-           ESTILOS (CSS)
+           CSS (INTERFACE MODERNA)
            ========================================= */
         :root {
             --primary-grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -41,9 +41,9 @@
             font-size: 16px;
         }
 
-        /* Header & Stats */
         .app-container { height: 100vh; display: flex; flex-direction: column; position: relative; }
         
+        /* HEADER */
         .header {
             background: rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(20px);
@@ -80,7 +80,7 @@
         .stat-val { font-size: 18px; font-weight: 700; line-height: 1.1; }
         .stat-lbl { font-size: 9px; opacity: 0.9; margin-top: 2px; }
 
-        /* Main Content */
+        /* MAIN CONTENT */
         #main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f3f4f6; }
 
         .filters { display: flex; gap: 8px; padding: var(--spacing-sm) var(--spacing-md); background: #f3f4f6; flex-shrink: 0; }
@@ -94,7 +94,6 @@
         .filter-btn[data-filter="pending"].active { background: var(--warning-color); }
         .filter-btn[data-filter="copied"].active { background: var(--success-color); }
 
-        /* List Items */
         .notas-list { flex: 1; overflow-y: auto; padding: var(--spacing-sm) var(--spacing-md); padding-bottom: 180px; -webkit-overflow-scrolling: touch; }
         
         .nota-card {
@@ -127,7 +126,7 @@
         .empty-state { text-align: center; padding: 40px 20px; color: #6b7280; }
         .empty-icon { font-size: 48px; margin-bottom: 10px; opacity: 0.5; }
 
-        /* Footer */
+        /* FOOTER */
         .fixed-bottom {
             position: absolute; bottom: 0; left: 0; right: 0; background: white;
             padding: var(--spacing-md); padding-bottom: calc(var(--spacing-md) + var(--safe-area-bottom));
@@ -141,7 +140,7 @@
         .btn-small { padding: 10px; border-radius: var(--radius-md); border: none; font-weight: 600; color: white; font-size: 12px; }
         .btn-success { background: linear-gradient(135deg, var(--success-color), #059669); color: white; }
 
-        /* Scanner UI */
+        /* SCANNER UI */
         #scanner-ui { display: none; position: fixed; inset: 0; background: #000; z-index: 200; flex-direction: column; }
         #scanner-ui.active { display: flex; }
         #video-wrapper { flex: 1; position: relative; overflow: hidden; }
@@ -154,9 +153,7 @@
             width: 280px; height: 280px; border-radius: 20px;
             box-shadow: 0 0 0 9999px var(--dark-overlay); z-index: 10;
         }
-        .scan-border {
-            width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.3); border-radius: 20px; position: relative;
-        }
+        .scan-border { width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.3); border-radius: 20px; position: relative; }
         .corner { position: absolute; width: 30px; height: 30px; border-color: var(--success-color); border-style: solid; border-width: 4px; }
         .tl { top: -2px; left: -2px; border-right: none; border-bottom: none; border-radius: 20px 0 0 0; }
         .tr { top: -2px; right: -2px; border-left: none; border-bottom: none; border-radius: 0 20px 0 0; }
@@ -172,7 +169,6 @@
             font-size: 12px; display: flex; justify-content: space-between; font-family: monospace;
         }
         .turbo-indicator { position: absolute; top: 90px; right: 20px; background: rgba(239, 68, 68, 0.9); color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; z-index: 11; }
-
         .scanner-controls { background: #000; padding: 20px; padding-bottom: calc(20px + var(--safe-area-bottom)); display: flex; gap: 12px; }
         .btn-scan-ctrl { flex: 1; padding: 16px; border: none; border-radius: var(--radius-md); font-weight: 700; font-size: 16px; }
         .btn-stop { background: var(--danger-color); color: white; }
@@ -185,7 +181,7 @@
         }
         .scan-toast.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 
-        /* Modals */
+        /* MODALS */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 300; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
         .modal-overlay.active { display: flex; }
         .modal-box { background: white; width: 100%; max-width: 450px; border-radius: 20px; padding: 24px; animation: modalUp 0.3s; }
@@ -202,7 +198,7 @@
         .btn-modal-ghost { background: #f3f4f6; color: #4b5563; }
         .btn-modal-confirm { background: #4f46e5; color: white; }
 
-        /* Toasts & Loaders */
+        /* TOASTS & LOADERS */
         .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90%; max-width: 400px; pointer-events: none; }
         .toast { background: white; padding: 12px 16px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; animation: slideDown 0.3s; pointer-events: auto; border-left: 5px solid #ccc; }
         .toast.success { border-left-color: var(--success-color); }
@@ -231,9 +227,9 @@
     <div class="app-container">
         <header class="header">
             <div class="header-top">
-                <h1>⚡ Scanner Ultimate</h1>
+                <h1>⚡ Scanner ZXing</h1>
                 <div class="speed-badge">
-                    <div class="pulse-dot"></div> AI-Core
+                    <div class="pulse-dot"></div> Stable
                 </div>
             </div>
             <div class="stats-grid">
@@ -293,7 +289,7 @@
                 <span>Veloc: <b id="hud-speed">0/m</b></span>
             </div>
 
-            <div class="turbo-indicator">⚡ AI ENHANCED</div>
+            <div class="turbo-indicator">⚡ STABLE</div>
             <div class="scan-toast" id="scan-toast">✅ Lida!</div>
         </div>
 
@@ -330,15 +326,15 @@
 
     <script>
         /**
-         * SCANNER NF ULTRA PRO - ULTIMATE VERSION
-         * Motor: jsQR (Melhor precisão web)
-         * Recurso: Binarização AI-Lite (Revitaliza códigos apagados)
+         * SCANNER NF ULTRA PRO - ZXING VERSION
+         * Lógica de leitura baseada em ZXing (Estável)
+         * Estrutura de UI Otimizada
          */
 
         const Config = {
             MAX_STORAGE: 1500,
-            SCAN_COOLDOWN: 400, // Reduzido para maior velocidade
-            STORAGE_KEY: 'notas-fiscais-ultra-v5'
+            SCAN_COOLDOWN: 400,
+            STORAGE_KEY: 'notas-fiscais-ultra-zxing'
         };
 
         const State = {
@@ -347,7 +343,7 @@
             scanSession: { active: false, startTime: null, count: 0, times: [] }
         };
 
-        // Cache de Elementos do DOM
+        // DOM Cache
         const UI = {
             list: document.getElementById('notas-list'),
             loader: document.getElementById('loader'),
@@ -360,19 +356,21 @@
             scanToast: document.getElementById('scan-toast'),
             actionGrid: document.getElementById('action-grid'),
             btnCopyAll: document.getElementById('btn-copy-all'),
+            
             statTotal: document.getElementById('stat-total'),
             statPending: document.getElementById('stat-pending'),
             statCopied: document.getElementById('stat-copied'),
             statSpeed: document.getElementById('stat-speed'),
+            
             cntAll: document.getElementById('cnt-all'),
             cntPending: document.getElementById('cnt-pending'),
             cntCopied: document.getElementById('cnt-copied'),
+            
             hudSession: document.getElementById('hud-session'),
             hudSpeed: document.getElementById('hud-speed'),
             hudCount: document.getElementById('hud-count'),
         };
 
-        // Utilitários
         const Utils = {
             extractKey: (text) => {
                 if (!text) return null;
@@ -389,7 +387,7 @@
                 toast.innerHTML = msg;
                 document.getElementById('toast-container').appendChild(toast);
                 if (navigator.vibrate) {
-                    if (type === 'success') navigator.vibrate(30); // Vibração mais rápida
+                    if (type === 'success') navigator.vibrate(30);
                     if (type === 'error') navigator.vibrate([100, 50, 100]);
                 }
                 setTimeout(() => toast.remove(), 2500);
@@ -402,7 +400,6 @@
             }
         };
 
-        // Gerenciador de Dados
         const DataManager = {
             load: () => {
                 try {
@@ -460,7 +457,6 @@
             }
         };
 
-        // Renderizador de UI
         const Renderer = {
             updateStats: () => {
                 const total = State.notas.length;
@@ -512,17 +508,19 @@
         };
 
         // =========================================
-        // SCANNER MODULE (JSQR + AI ENHANCEMENT)
+        // SCANNER MODULE (LÓGICA ZXING ORIGINAL)
         // =========================================
         const Scanner = {
             stream: null,
+            codeReader: null,
             rafId: null,
             lastCode: '',
             lastScanTime: 0,
 
             start: async () => {
-                if (typeof jsQR === 'undefined') {
-                    alert("Biblioteca jsQR não carregada. Verifique a internet.");
+                // Verifica se ZXing carregou
+                if (typeof ZXing === 'undefined') {
+                    alert("Biblioteca ZXing não carregada.");
                     return;
                 }
                 if (State.scanSession.active) return;
@@ -530,7 +528,6 @@
                 UI.loader.classList.add('active');
 
                 try {
-                    // Resolução otimizada para processamento rápido em mobile
                     const constraints = {
                         video: {
                             facingMode: 'environment',
@@ -562,8 +559,10 @@
                                 State.scanSession.startTime = Date.now();
                                 State.scanSession.count = 0;
                                 Scanner.lastScanTime = 0;
+                                
+                                Scanner.codeReader = new ZXing.BrowserQRCodeReader();
                                 Scanner.loop();
-                                Utils.showToast("⚡ Scanner AI Ativado", "success");
+                                Utils.showToast("⚡ ZXing Scanner Ativado", "success");
                             })
                             .catch(e => {
                                 UI.loader.classList.remove('active');
@@ -587,33 +586,14 @@
                     Scanner.stream = null;
                 }
                 if (Scanner.rafId) cancelAnimationFrame(Scanner.rafId);
+                if (Scanner.codeReader) {
+                    try { Scanner.codeReader.reset(); } catch(e){}
+                    Scanner.codeReader = null;
+                }
                 UI.video.srcObject = null;
                 UI.scannerUI.classList.remove('active');
                 UI.mainContent.style.display = 'flex';
                 App.render();
-            },
-
-            // Função "Revitalizadora" de QR Code
-            // Converte tons de cinza em Preto ou Branco puro (Binarização)
-            enhanceImage: (imageData) => {
-                const data = imageData.data;
-                const threshold = 120; // Ponto de corte para determinar o que é preto ou branco
-                
-                for (let i = 0; i < data.length; i += 4) {
-                    const r = data[i];
-                    const g = data[i + 1];
-                    const b = data[i + 2];
-                    // Fórmula de Luminância (Grayscale)
-                    const v = (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
-                    
-                    // Binarização: Se for mais claro que o limiar, vira Branco (255). Senão, Preto (0).
-                    const bin = v >= threshold ? 255 : 0;
-                    
-                    data[i] = bin;
-                    data[i + 1] = bin;
-                    data[i + 2] = bin;
-                }
-                return imageData;
             },
 
             loop: () => {
@@ -621,11 +601,11 @@
 
                 const video = UI.video;
                 const canvas = UI.canvas;
-                const ctx = canvas.getContext('2d', { willReadFrequently: true }); // Otimização
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
                 if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
                     
-                    // SMART CROP (Recorte Central)
+                    // SMART CROP (Essencial para performance do ZXing)
                     const size = Math.min(video.videoWidth, video.videoHeight);
                     const sx = (video.videoWidth - size) / 2;
                     const sy = (video.videoHeight - size) / 2;
@@ -635,39 +615,36 @@
                     ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
 
                     try {
-                        const imageData = ctx.getImageData(0, 0, size, size);
-                        
-                        // 1. APLICAR ENHANCEMENT (Revitaliza QR Code apagado)
-                        const enhancedData = Scanner.enhanceImage(imageData);
+                        if (Scanner.codeReader) {
+                            const imageData = ctx.getImageData(0, 0, size, size);
+                            
+                            // Decodificação com ZXing
+                            const result = Scanner.codeReader.decodeFromImageData(imageData);
+                            
+                            if (result && result.text) {
+                                const key = Utils.extractKey(result.text);
+                                const now = Date.now();
 
-                        // 2. DECODIFICAR COM jsQR
-                        const code = jsQR(enhancedData.data, enhancedData.width, enhancedData.height, {
-                            inversionAttempts: "dontInvert",
-                        });
+                                if (key && (key !== Scanner.lastCode || (now - Scanner.lastScanTime > Config.SCAN_COOLDOWN))) {
+                                    Scanner.lastCode = key;
+                                    Scanner.lastScanTime = now;
 
-                        if (code) {
-                            const key = Utils.extractKey(code.data);
-                            const now = Date.now();
-
-                            if (key && (key !== Scanner.lastCode || (now - Scanner.lastScanTime > Config.SCAN_COOLDOWN))) {
-                                Scanner.lastCode = key;
-                                Scanner.lastScanTime = now;
-
-                                if (DataManager.addNote(key)) {
-                                    State.scanSession.count++;
-                                    Scanner.trackSpeed(now);
-                                    Renderer.flashScan();
-                                    Utils.vibrate(30);
-                                    
-                                    UI.hudSession.textContent = State.scanSession.count;
-                                    UI.hudCount.textContent = State.notas.length;
-                                } else {
-                                    Utils.vibrate([20, 20, 20]);
+                                    if (DataManager.addNote(key)) {
+                                        State.scanSession.count++;
+                                        Scanner.trackSpeed(now);
+                                        Renderer.flashScan();
+                                        Utils.vibrate(30);
+                                        
+                                        UI.hudSession.textContent = State.scanSession.count;
+                                        UI.hudCount.textContent = State.notas.length;
+                                    } else {
+                                        Utils.vibrate([20, 20, 20]);
+                                    }
                                 }
                             }
                         }
                     } catch (e) {
-                        // Ignora erros de leitura de frame
+                        // Ignora erros de leitura
                     }
                 }
 
@@ -697,7 +674,7 @@
             }
         });
 
-        // MODAL & APP CONTROLLER
+        // MODAL & APP
         const Modal = {
             openManual: () => {
                 UI.manualInput.value = '';
