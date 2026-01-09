@@ -1129,39 +1129,64 @@ const Scanner = {
     lastCode: '',
     lastScanTime: 0,
 
-    start: async () => {
+        start: async () => {
         if (State.scanSession.active) return;
         
         UI.loader.classList.add('active');
 
         try {
-            // Tenta descobrir dispositivos primeiro para debug
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoDevices = devices.filter(device => device.kind === 'videoinput');
-            
-            console.log("Câmeras encontradas:", videoDevices.length);
-            
-            if (videoDevices.length === 0) {
-                throw new Error("Nenhum hardware de câmera detectado no dispositivo.");
-            }
-
-            // TENTATIVA 1: Câmera Traseira (Ideal para QR Code)
-            let constraints = {
+            // SOLUÇÃO: Removemos a restrição de tamanho (width/height ideal).
+            // Isso força o celular a usar a resolução padrão, que sempre funciona.
+            const constraints = {
                 video: {
-                    facingMode: 'environment',
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
-                }
+                    facingMode: 'environment' // Pede a câmera traseira, sem especificar tamanho
+                },
+                audio: false
             };
 
             let stream;
             try {
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
             } catch (errEnv) {
-                console.warn("Falha ao abrir câmera traseira específica, tentando genérica...", errEnv);
-                // TENTATIVA 2: Qualquer câmera disponível (Fallback)
+                console.warn("Tentando genérica...");
+                // Se falhar a traseira, pega qualquer uma
                 stream = await navigator.mediaDevices.getUserMedia({ video: true });
             }
+
+            Scanner.stream = stream;
+            UI.video.srcObject = Scanner.stream;
+            
+            // Aguarda o vídeo realmente carregar dados antes de dar play
+            UI.video.onloadedmetadata = () => {
+                UI.video.play()
+                    .then(() => {
+                        // Sucesso total
+                        UI.loader.classList.remove('active');
+                        UI.mainContent.style.display = 'none';
+                        UI.scannerUI.classList.add('active');
+
+                        State.scanSession.active = true;
+                        State.scanSession.startTime = Date.now();
+                        State.scanSession.count = 0;
+                        Scanner.lastScanTime = 0;
+                        
+                        Scanner.codeReader = new ZXing.BrowserQRCodeReader();
+                        Scanner.loop();
+                        Utils.showToast("🔥 Modo Turbo Ativado", "success");
+                    })
+                    .catch(e => {
+                        console.error("Erro no play:", e);
+                        UI.loader.classList.remove('active');
+                        alert("Erro ao iniciar o vídeo. Tente recarregar a página.");
+                    });
+            };
+
+        } catch (err) {
+            console.error("Erro detalhado:", err);
+            UI.loader.classList.remove('active');
+            alert("Erro: " + err.message + "\n\nVerifique se você permitiu a câmera nas configurações do navegador.");
+        }
+    },
 
             Scanner.stream = stream;
             UI.video.srcObject = Scanner.stream;
