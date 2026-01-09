@@ -3,577 +3,1471 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner NFe Pro</title>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Scanner NF Ultra Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        
-        :root {
-            --bg-color: #ffffff;
-            --text-color: #000000;
-            --border-color: #000000;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-size: 16px;
-            line-height: 1.5;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .hidden { display: none !important; }
-        .bold { font-weight: 700; }
-
-        header {
-            padding: 1rem;
-            border-bottom: 2px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--bg-color);
-            z-index: 10;
-        }
-
-        h1 { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .header-controls {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        #stats-counter {
-            font-family: monospace;
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-
-        #btn-copy {
-            background: none;
-            border: 1px solid #000;
-            padding: 4px 10px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-        }
-
-        main {
-            flex: 1;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        #view-scanner {
-            position: relative;
-            height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #qr-reader {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: fixed;
             width: 100%;
-            max-width: 600px;
         }
 
-        #qr-reader video {
-            width: 100% !important;
-            border: none !important;
-        }
-
-        #scan-feedback {
-            position: absolute;
-            bottom: 20%;
-            background: rgba(0, 0, 0, 0.9);
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 1rem;
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none;
-            max-width: 80%;
-            text-align: center;
+        .header {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            color: white;
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
             z-index: 100;
-        }
-        
-        #scan-feedback.active { opacity: 1; }
-        #scan-feedback.success { background: rgba(0, 200, 0, 0.9); }
-        #scan-feedback.error { background: rgba(255, 50, 50, 0.9); }
-        #scan-feedback.warning { background: rgba(255, 150, 0, 0.9); }
-
-        #view-list {
-            padding-bottom: 80px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        #manual-input-area {
-            padding: 1rem;
-            background: #f4f4f4;
-            border-bottom: 2px solid #000;
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 0.8rem;
-            border: 1px solid #000;
-            font-size: 1rem;
-            border-radius: 0;
-            outline: none;
-        }
-
-        .empty-state {
-            padding: 2rem;
-            text-align: center;
-            color: #666;
-            border: 1px dashed #ccc;
-            margin: 1rem;
-        }
-
-        .note-card {
-            padding: 1rem;
-            border-bottom: 1px solid #eee;
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #fff;
-            transition: background 0.2s;
-        }
-        
-        .note-card:active { background: #f9f9f9; }
-
-        .note-key {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1rem;
-            word-break: break-all;
-            letter-spacing: -0.5px;
-        }
-        
-        .note-meta {
-            font-size: 0.75rem;
-            color: #666;
-            margin-top: 4px;
-            display: block;
+            margin-bottom: 12px;
         }
 
-        .btn-delete {
-            background: none;
-            border: 1px solid #000;
-            width: 32px;
-            height: 32px;
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .speed-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
             display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            margin-left: 1rem;
+            gap: 5px;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
         }
-        
-        .btn-delete::before {
-            content: '×';
-            font-size: 1.2rem;
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 5px;
+            border-radius: 10px;
+        }
+
+        .stat-number {
+            font-size: 20px;
+            font-weight: bold;
             line-height: 1;
         }
 
-        nav {
+        .stat-label {
+            font-size: 9px;
+            opacity: 0.9;
+            margin-top: 3px;
+        }
+
+        #scanner-container {
+            display: none;
             position: fixed;
-            bottom: 0; left: 0; width: 100%;
-            background: var(--bg-color);
-            border-top: 2px solid var(--border-color);
+            inset: 0;
+            background: #000;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        #scanner-container.active {
             display: flex;
-            justify-content: space-around;
-            padding: 0.8rem 0;
-            z-index: 20;
         }
 
-        .nav-btn {
-            background: none;
-            border: 2px solid transparent;
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-transform: uppercase;
+        #video-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
         }
 
-        .nav-btn.active {
-            border-color: var(--border-color);
-            background: var(--text-color);
-            color: var(--bg-color);
+        #video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: cover;
         }
 
-        #flash-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: #fff;
-            opacity: 0;
+        #canvas {
+            display: none;
+        }
+
+        .scan-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border: 3px solid rgba(16, 185, 129, 0.8);
+            border-radius: 24px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
             pointer-events: none;
-            z-index: 99;
-            transition: opacity 0.1s;
+            z-index: 10;
         }
 
-        /* Esconder botões e textos desnecessários da biblioteca */
-        #qr-reader__dashboard_section_csr button,
-        #qr-reader__camera_permission_button {
-            display: none !important;
+        .scan-corner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 5px solid #10b981;
+        }
+
+        .scan-corner.top-left {
+            top: -5px;
+            left: -5px;
+            border-right: none;
+            border-bottom: none;
+            border-radius: 24px 0 0 0;
+        }
+
+        .scan-corner.top-right {
+            top: -5px;
+            right: -5px;
+            border-left: none;
+            border-bottom: none;
+            border-radius: 0 24px 0 0;
+        }
+
+        .scan-corner.bottom-left {
+            bottom: -5px;
+            left: -5px;
+            border-right: none;
+            border-top: none;
+            border-radius: 0 0 0 24px;
+        }
+
+        .scan-corner.bottom-right {
+            bottom: -5px;
+            right: -5px;
+            border-left: none;
+            border-top: none;
+            border-radius: 0 0 24px 0;
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #10b981, transparent);
+            box-shadow: 0 0 15px #10b981;
+            animation: scanLine 1.5s ease-in-out infinite;
+        }
+
+        @keyframes scanLine {
+            0%, 100% { transform: translateY(0); opacity: 0; }
+            50% { transform: translateY(300px); opacity: 1; }
+        }
+
+        .scan-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 15px;
+            color: white;
+            z-index: 11;
+        }
+
+        .scan-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .scan-info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .scan-info-label {
+            opacity: 0.8;
+        }
+
+        .scan-info-value {
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        .scan-instruction {
+            position: absolute;
+            bottom: 120px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 0 20px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+            z-index: 11;
+        }
+
+        .scan-status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(16, 185, 129, 0.95);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 10001;
+            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.5);
+            transition: transform 0.2s ease;
+        }
+
+        .scan-status.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .scanner-controls {
+            background: rgba(0, 0, 0, 0.95);
+            padding: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-scanner {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 14px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-stop {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-stop:active {
+            background: #dc2626;
+            transform: scale(0.96);
+        }
+
+        .btn-list {
+            background: white;
+            color: #333;
+        }
+
+        .btn-list:active {
+            background: #f3f4f6;
+            transform: scale(0.96);
+        }
+
+        .filters {
+            display: flex;
+            gap: 8px;
+            padding: 15px;
+        }
+
+        .filter-btn {
+            flex: 1;
+            padding: 12px 8px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            background: white;
+            color: #333;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .filter-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+        }
+
+        .filter-btn.all.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .filter-btn.pending.active {
+            background: #fbbf24;
+            color: white;
+        }
+
+        .filter-btn.copied.active {
+            background: #10b981;
+            color: white;
+        }
+
+        .notas-list {
+            padding: 0 15px 100px;
+            overflow-y: auto;
+            max-height: calc(100vh - 260px);
+        }
+
+        .nota-card {
+            background: white;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            display: flex;
+            gap: 10px;
+            align-items: start;
+            animation: slideIn 0.2s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .nota-card.copiada {
+            background: #f0fdf4;
+            border: 2px solid #10b981;
+        }
+
+        .checkbox {
+            width: 26px;
+            height: 26px;
+            border: 2px solid #ccc;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .checkbox.checked {
+            background: #10b981;
+            border-color: #10b981;
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .nota-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .nota-chave {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+            line-height: 1.4;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .nota-card.copiada .nota-chave {
+            color: #9ca3af;
+            text-decoration: line-through;
+        }
+
+        .nota-data {
+            font-size: 10px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .nota-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .btn-action {
+            width: 38px;
+            height: 38px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .btn-copy {
+            background: #e0e7ff;
+            color: #667eea;
+        }
+
+        .btn-copy.copied {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .btn-action:active {
+            transform: scale(0.92);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+            opacity: 0.6;
+        }
+
+        .fixed-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 90;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 17px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            width: calc(33.33% - 5px);
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .btn-export {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-clean {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-clear {
+            background: #ef4444;
+            color: white;
+        }
+
+        .bottom-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .alert {
+            position: fixed;
+            top: 80px;
+            left: 15px;
+            right: 15px;
+            padding: 15px;
+            border-radius: 14px;
+            font-weight: 600;
+            z-index: 10001;
+            animation: slideDown 0.3s ease;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 2px solid #3b82f6;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #10b981;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .manual-input-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .manual-input-modal.active {
+            display: flex;
+        }
+
+        .manual-input-content {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 500px;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .manual-input-content h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+
+        .manual-input-content p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-helper {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .char-counter {
+            float: right;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-modal {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-modal-cancel {
+            background: #f3f4f6;
+            color: #333;
+        }
+
+        .btn-modal-add {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-modal:active {
+            transform: scale(0.98);
+        }
+
+        .btn-tertiary {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid white;
+            border-radius: 12px;
+            background: transparent;
+            color: white;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .btn-tertiary:active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(0.98);
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10002;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .performance-mode {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            background: rgba(239, 68, 68, 0.95);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 11;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
     </style>
 </head>
 <body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Iniciando câmera...</div>
+    </div>
 
-    <div id="flash-overlay"></div>
-
-    <header>
-        <h1>NFe Scanner</h1>
-        <div class="header-controls">
-            <span id="stats-counter">0</span>
-            <button id="btn-copy">COPIAR</button>
+    <div class="header">
+        <div class="header-top">
+            <h1>⚡ Scanner Ultra Pro</h1>
+            <div class="speed-badge">
+                <div class="pulse-dot"></div>
+                TURBO
+            </div>
         </div>
-    </header>
-
-    <main>
-        <section id="view-list">
-            <div id="manual-input-area">
-                <input type="text" id="input-manual" placeholder="Chave de 44 dígitos" inputmode="numeric">
-                <button id="btn-add-manual" class="nav-btn">OK</button>
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="total-count">0</div>
+                <div class="stat-label">Total</div>
             </div>
-            <div id="notes-container"></div>
-            <div id="empty-msg" class="empty-state">
-                <p>Nenhuma nota registrada.</p>
+            <div class="stat-item">
+                <div class="stat-number" id="pending-count" style="color: #fbbf24;">0</div>
+                <div class="stat-label">Pendentes</div>
             </div>
-        </section>
+            <div class="stat-item">
+                <div class="stat-number" id="copied-count" style="color: #10b981;">0</div>
+                <div class="stat-label">Copiadas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="scan-speed">0</div>
+                <div class="stat-label">Scan/min</div>
+            </div>
+        </div>
+    </div>
 
-        <section id="view-scanner" class="hidden">
-            <div id="qr-reader"></div>
-            <div id="scan-feedback">Registrado</div>
-        </section>
-    </main>
+    <div id="scanner-container">
+        <div id="video-container">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+            <div class="scan-overlay">
+                <div class="scan-corner top-left"></div>
+                <div class="scan-corner top-right"></div>
+                <div class="scan-corner bottom-left"></div>
+                <div class="scan-corner bottom-right"></div>
+                <div class="scan-line"></div>
+            </div>
+            <div class="scan-info">
+                <div class="scan-info-row">
+                    <span class="scan-info-label">Sessão:</span>
+                    <span class="scan-info-value" id="session-count">0</span>
+                </div>
+                <div class="scan-info-row">
+                    <span class="scan-info-label">Última:</span>
+                    <span class="scan-info-value" id="last-scan-time">--:--</span>
+                </div>
+                <div class="scan-info-row">
+                    <span class="scan-info-label">Velocidade:</span>
+                    <span class="scan-info-value" id="current-speed">0 scan/min</span>
+                </div>
+            </div>
+            <div class="performance-mode">🔥 MODO TURBO</div>
+            <div class="scan-instruction">
+                Aponte para o QR Code
+            </div>
+        </div>
+        <div class="scan-status" id="scan-status">✅ Registrada!</div>
+        <div class="scanner-controls">
+            <button class="btn-scanner btn-stop" onclick="stopScanner()">⏹ Parar</button>
+            <button class="btn-scanner btn-list" onclick="showList()">📋 Lista (<span id="scan-count">0</span>)</button>
+        </div>
+    </div>
 
-    <nav>
-        <button id="nav-list" class="nav-btn active">Lista</button>
-        <button id="nav-scan" class="nav-btn">Scanner</button>
-    </nav>
+    <div id="main-content">
+        <div class="filters">
+            <button class="filter-btn all active" onclick="setFilter('all')">Todas <span id="filter-all">0</span></button>
+            <button class="filter-btn pending" onclick="setFilter('pending')">Pendentes <span id="filter-pending">0</span></button>
+            <button class="filter-btn copied" onclick="setFilter('copied')">Copiadas <span id="filter-copied">0</span></button>
+        </div>
+
+        <div class="notas-list" id="notas-list">
+            <div class="empty-state">
+                <div class="empty-icon">⚡</div>
+                <div style="font-size: 20px; margin-bottom: 10px; font-weight: 700;">Modo Alta Performance</div>
+                <div style="font-size: 14px; opacity: 0.85;">Capacidade: Até 1500 notas</div>
+                <div style="font-size: 14px; opacity: 0.85; margin-top: 5px;">Velocidade: Instantânea</div>
+            </div>
+        </div>
+
+        <div class="fixed-bottom">
+            <button class="btn-primary" onclick="startScanner()">
+                <span style="font-size: 24px;">⚡</span>
+                Iniciar Scanner Ultra
+            </button>
+            <button class="btn-tertiary" onclick="openManualInput()">
+                <span style="font-size: 18px;">⌨️</span>
+                Entrada Manual
+            </button>
+            <div class="bottom-actions" id="bottom-actions" style="display: none;">
+                <button class="btn-secondary btn-export" onclick="exportarNotas()">📥 Exportar</button>
+                <button class="btn-secondary btn-clean" onclick="removerDuplicatas()">🧹 Limpar</button>
+                <button class="btn-secondary btn-clear" onclick="limparTodas()">🗑️ Apagar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="manual-input-modal" id="manual-input-modal">
+        <div class="manual-input-content">
+            <h2>⌨️ Entrada Manual Rápida</h2>
+            <p>Digite ou cole a chave de 44 dígitos</p>
+            
+            <div class="input-group">
+                <label for="manual-code">
+                    Chave de Acesso
+                    <span class="char-counter"><span id="char-count">0</span>/44</span>
+                </label>
+                <input 
+                    type="text" 
+                    id="manual-code" 
+                    placeholder="00000000000000000000000000000000000000000000"
+                    maxlength="44"
+                    inputmode="numeric"
+                    oninput="updateCharCount()"
+                    onpaste="handlePaste(event)"
+                >
+                <div class="input-helper">
+                    💡 Cole ou digite os números
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-modal btn-modal-cancel" onclick="closeManualInput()">Cancelar</button>
+                <button class="btn-modal btn-modal-add" onclick="addManualCode()">✓ Adicionar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const Config = {
-            STORAGE_KEY: 'notas-fiscais-html5qr',
-            SCAN_COOLDOWN: 500,
-            KEY_REGEX: /\d{44}/,
-            MAX_STORAGE_ITEMS: 1500,
-            NO_KEY_COOLDOWN: 2000
-        };
+        let notas = [];
+        let currentFilter = 'all';
+        let scanning = false;
+        let lastScannedCode = '';
+        let lastScanTime = 0;
+        let stream = null;
+        let sessionScanCount = 0;
+        let sessionStartTime = null;
+        let scanTimes = [];
+        let scanInterval = null;
 
-        const State = {
-            notas: [],
-            view: 'list',
-            lastInvalidScan: 0,
-            lastScannedCode: null,
-            lastScanTime: 0
-        };
+        const SCAN_COOLDOWN = 500;
+        const MAX_STORAGE = 1500;
+        const SCAN_FPS = 20;
 
-        const UI = {
-            viewList: document.getElementById('view-list'),
-            viewScan: document.getElementById('view-scanner'),
-            navList: document.getElementById('nav-list'),
-            navScan: document.getElementById('nav-scan'),
-            notesContainer: document.getElementById('notes-container'),
-            emptyMsg: document.getElementById('empty-msg'),
-            statsCounter: document.getElementById('stats-counter'),
-            btnCopy: document.getElementById('btn-copy'),
-            inputManual: document.getElementById('input-manual'),
-            btnAddManual: document.getElementById('btn-add-manual'),
-            scanFeedback: document.getElementById('scan-feedback'),
-            flashOverlay: document.getElementById('flash-overlay')
-        };
+        window.addEventListener('load', () => {
+            carregarNotas();
+            document.addEventListener('gesturestart', e => e.preventDefault());
+        });
 
-        const Utils = {
-            extractKey: (text) => {
-                if (!text) return null;
-                const cleaned = text.replace(/\D/g, '');
-                const match = cleaned.match(/\d{44}/);
-                return match ? match[0] : null;
-            },
-            formatKeyDisplay: (key) => key.replace(/(.{4})/g, '$1 ').trim(),
-            getTimestamp: () => {
-                const now = new Date();
-                return now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            },
-            vibrate: (pattern) => {
-                if (navigator.vibrate) navigator.vibrate(pattern);
-            },
-            copyToClipboard: (text) => {
-                if (!navigator.clipboard) {
-                    alert("Seu navegador não suporta cópia automática.");
-                    return Promise.reject();
+        function carregarNotas() {
+            try {
+                const saved = localStorage.getItem('notas-fiscais-ultra');
+                if (saved) {
+                    notas = JSON.parse(saved);
+                    if (notas.length > MAX_STORAGE) {
+                        showAlert(`⚠️ Mantendo ${MAX_STORAGE} mais recentes`, 'info');
+                        notas = notas.slice(0, MAX_STORAGE);
+                        salvarNotas();
+                    }
+                    renderNotas();
                 }
-                return navigator.clipboard.writeText(text);
+            } catch (error) {
+                console.error('Erro ao carregar:', error);
+                showAlert('⚠️ Erro ao carregar dados', 'error');
             }
-        };
+        }
 
-        const DataManager = {
-            load: () => {
-                try {
-                    const raw = localStorage.getItem(Config.STORAGE_KEY);
-                    if (raw) State.notas = JSON.parse(raw);
-                } catch (e) { State.notas = []; }
-            },
-            save: () => {
-                try {
-                    localStorage.setItem(Config.STORAGE_KEY, JSON.stringify(State.notas));
-                } catch (e) { alert("Erro: Memória cheia."); }
-            },
-            addNote: (key) => {
-                if (!key) return false;
-                if (State.notas.some(n => n.key === key)) return false;
-
-                const newNote = { id: Date.now(), key: key, date: Utils.getTimestamp() };
-                State.notas.unshift(newNote);
-                if (State.notas.length > Config.MAX_STORAGE_ITEMS) State.notas.pop();
-                DataManager.save();
-                return true;
-            },
-            removeNote: (id) => {
-                State.notas = State.notas.filter(n => n.id !== id);
-                DataManager.save();
+        function salvarNotas() {
+            try {
+                if (notas.length > MAX_STORAGE) {
+                    notas = notas.slice(0, MAX_STORAGE);
+                }
+                localStorage.setItem('notas-fiscais-ultra', JSON.stringify(notas));
+            } catch (error) {
+                console.error('Erro ao salvar:', error);
+                showAlert('⚠️ Limite de armazenamento!', 'error');
             }
-        };
+        }
 
-        const Renderer = {
-            updateStats: () => {
-                UI.statsCounter.textContent = State.notas.length.toString();
-            },
-            renderList: () => {
-                Renderer.updateStats();
-                UI.notesContainer.innerHTML = '';
+        function extrairChave(texto) {
+            const match = texto.match(/\d{44}/);
+            return match ? match[0] : null;
+        }
+
+        function formatarChave(chave) {
+            return chave.match(/.{1,4}/g).join(' ');
+        }
+
+        function showAlert(message, type = 'error') {
+            const existingAlert = document.querySelector('.alert');
+            if (existingAlert) existingAlert.remove();
+
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            document.body.appendChild(alert);
+            
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        async function startScanner() {
+            if (scanning) return;
+
+            try {
+                showLoading(true);
                 
-                if (State.notas.length === 0) {
-                    UI.emptyMsg.classList.remove('hidden');
-                    return;
-                }
-                UI.emptyMsg.classList.add('hidden');
-
-                const fragment = document.createDocumentFragment();
-                State.notas.forEach(note => {
-                    const card = document.createElement('div');
-                    card.className = 'note-card';
-                    
-                    const content = document.createElement('div');
-                    content.className = 'flex-col';
-                    
-                    const keyEl = document.createElement('div');
-                    keyEl.className = 'note-key bold';
-                    keyEl.textContent = Utils.formatKeyDisplay(note.key);
-                    
-                    const metaEl = document.createElement('span');
-                    metaEl.className = 'note-meta';
-                    metaEl.textContent = note.date;
-
-                    content.appendChild(keyEl);
-                    content.appendChild(metaEl);
-
-                    const btnDel = document.createElement('button');
-                    btnDel.className = 'btn-delete';
-                    btnDel.setAttribute('aria-label', 'Remover');
-                    btnDel.onclick = () => {
-                        if(confirm("Remover esta chave?")) {
-                            DataManager.removeNote(note.id);
-                            App.render();
-                        }
-                    };
-
-                    card.appendChild(content);
-                    card.appendChild(btnDel);
-                    fragment.appendChild(card);
+                const video = document.getElementById('video');
+                
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
                 });
-                UI.notesContainer.appendChild(fragment);
-            },
-            flashScan: () => {
-                UI.flashOverlay.style.opacity = '0.6';
-                setTimeout(() => UI.flashOverlay.style.opacity = '0', 100);
-            },
-            showScanFeedback: (text, type = 'success') => {
-                UI.scanFeedback.textContent = text;
-                UI.scanFeedback.className = 'active ' + type;
-                setTimeout(() => UI.scanFeedback.classList.remove('active'), type === 'error' ? 2500 : 1500);
-            },
-            switchView: (viewName) => {
-                State.view = viewName;
-                if (viewName === 'list') {
-                    UI.viewList.classList.remove('hidden');
-                    UI.viewScan.classList.add('hidden');
-                    UI.navList.classList.add('active');
-                    UI.navScan.classList.remove('active');
-                    App.render();
-                    Scanner.stop();
+
+                video.srcObject = stream;
+                await video.play();
+
+                document.getElementById('scanner-container').classList.add('active');
+                document.getElementById('main-content').style.display = 'none';
+                
+                scanning = true;
+                sessionScanCount = 0;
+                sessionStartTime = Date.now();
+                
+                showLoading(false);
+                showAlert('⚡ MODO TURBO ATIVADO!', 'success');
+
+                scanContinuously();
+
+            } catch (error) {
+                console.error('Erro ao iniciar scanner:', error);
+                scanning = false;
+                showLoading(false);
+                
+                if (error.name === 'NotAllowedError') {
+                    showAlert('⚠️ Permissão de câmera negada', 'error');
+                } else if (error.name === 'NotFoundError') {
+                    showAlert('⚠️ Nenhuma câmera encontrada', 'error');
                 } else {
-                    UI.viewList.classList.add('hidden');
-                    UI.viewScan.classList.remove('hidden');
-                    UI.navList.classList.remove('active');
-                    UI.navScan.classList.add('active');
-                    Scanner.start();
+                    showAlert('⚠️ Erro: ' + error.message, 'error');
                 }
+                
+                document.getElementById('scanner-container').classList.remove('active');
+                document.getElementById('main-content').style.display = 'block';
             }
-        };
+        }
 
-        const Scanner = {
-            html5QrCode: null,
-            isScanning: false,
+        function scanContinuously() {
+            if (!scanning) return;
 
-            init: () => {
-                Scanner.html5QrCode = new Html5Qrcode("qr-reader");
-            },
-
-            start: async () => {
-                if (Scanner.isScanning) return;
-                
-                try {
-                    await Scanner.html5QrCode.start(
-                        { facingMode: "environment" },
-                        {
-                            fps: 10,
-                            qrbox: { width: 250, height: 250 }
-                        },
-                        Scanner.onScanSuccess,
-                        Scanner.onScanFailure
-                    );
-                    Scanner.isScanning = true;
-                } catch (err) {
-                    console.error("Erro ao iniciar scanner:", err);
-                    alert("Erro ao acessar câmera. Verifique as permissões.");
-                    Renderer.switchView('list');
-                }
-            },
-
-            stop: async () => {
-                if (!Scanner.isScanning) return;
-                
-                try {
-                    await Scanner.html5QrCode.stop();
-                    Scanner.isScanning = false;
-                } catch (err) {
-                    console.error("Erro ao parar scanner:", err);
-                }
-            },
-
-            onScanSuccess: (decodedText, decodedResult) => {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "dontInvert",
+            });
+            
+            if (code && code.data) {
+                const chave = extrairChave(code.data);
                 const now = Date.now();
                 
-                // Cooldown entre scans
-                if (now - State.lastScanTime < Config.SCAN_COOLDOWN) return;
-
-                const key = Utils.extractKey(decodedText);
-                
-                if (key) {
-                    // ENCONTROU 44 DÍGITOS
-                    if (key !== State.lastScannedCode) {
-                        State.lastScanTime = now;
-                        State.lastScannedCode = key;
-
-                        if (DataManager.addNote(key)) {
-                            Renderer.flashScan();
-                            Utils.vibrate(200);
-                            Renderer.showScanFeedback("✓ Registrado!", 'success');
-                            Renderer.updateStats();
-                        } else {
-                            Renderer.showScanFeedback("⚠ Já cadastrada", 'warning');
-                            Utils.vibrate(50);
+                if (chave && (chave !== lastScannedCode || now - lastScanTime > SCAN_COOLDOWN)) {
+                    lastScannedCode = chave;
+                    lastScanTime = now;
+                    
+                    if (adicionarNota(chave)) {
+                        sessionScanCount++;
+                        scanTimes.push(now);
+                        
+                        if (scanTimes.length > 10) {
+                            scanTimes.shift();
+                        }
+                        
+                        updateScanInfo();
+                        showScanStatus();
+                        updateScanCount();
+                        
+                        if (navigator.vibrate) {
+                            navigator.vibrate(50);
+                        }
+                    } else {
+                        if (navigator.vibrate) {
+                            navigator.vibrate([30, 30, 30]);
                         }
                     }
+                }
+            }
+
+            if (scanning) {
+                requestAnimationFrame(scanContinuously);
+            }
+        }
+
+        function updateScanInfo() {
+            document.getElementById('session-count').textContent = sessionScanCount;
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('last-scan-time').textContent = timeStr;
+            
+            if (scanTimes.length >= 2) {
+                const timeSpan = (scanTimes[scanTimes.length - 1] - scanTimes[0]) / 1000 / 60;
+                const speed = Math.round(scanTimes.length / timeSpan);
+                document.getElementById('current-speed').textContent = `${speed} scan/min`;
+                document.getElementById('scan-speed').textContent = speed;
+            }
+        }
+
+        async function stopScanner() {
+            scanning = false;
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            const video = document.getElementById('video');
+            video.srcObject = null;
+            
+            document.getElementById('scanner-container').classList.remove('active');
+            document.getElementById('main-content').style.display = 'block';
+            
+            scanTimes = [];
+            
+            if (sessionScanCount > 0) {
+                const duration = Math.round((Date.now() - sessionStartTime) / 1000);
+                showAlert(`✅ Sessão: ${sessionScanCount} notas em ${duration}s`, 'success');
+            }
+            
+            renderNotas();
+        }
+
+        function showList() {
+            stopScanner();
+        }
+
+        function showScanStatus() {
+            const status = document.getElementById('scan-status');
+            status.classList.add('show');
+            setTimeout(() => {
+                status.classList.remove('show');
+            }, 800);
+        }
+
+        function updateScanCount() {
+            document.getElementById('scan-count').textContent = notas.length;
+        }
+
+        function adicionarNota(chave) {
+            const existe = notas.find(n => n.chave === chave);
+            if (!existe) {
+                if (notas.length >= MAX_STORAGE) {
+                    showAlert('⚠️ Limite de 1500 atingido!', 'error');
+                    return false;
+                }
+                
+                const novaNota = {
+                    id: Date.now(),
+                    chave: chave,
+                    copiada: false,
+                    data: new Date().toLocaleString('pt-BR', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    })
+                };
+                notas.unshift(novaNota);
+                salvarNotas();
+                updateStats();
+                return true;
+            }
+            return false;
+        }
+
+        function removerDuplicatas() {
+            const notasUnicas = [];
+            const chavesVistas = new Set();
+            let duplicatasRemovidas = 0;
+            
+            notas.forEach(nota => {
+                if (!chavesVistas.has(nota.chave)) {
+                    chavesVistas.add(nota.chave);
+                    notasUnicas.push(nota);
                 } else {
-                    // LEU QR CODE MAS NÃO ACHOU 44 DÍGITOS
-                    if (now - State.lastInvalidScan > Config.NO_KEY_COOLDOWN) {
-                        State.lastInvalidScan = now;
-                        State.lastScanTime = now;
-                        
-                        Utils.vibrate([50, 100, 50]);
-                        Renderer.showScanFeedback("✗ Código inválido\n(Precisa ter 44 dígitos)", 'error');
-                        
-                        console.log('QR lido:', decodedText);
-                        console.log('Apenas números:', decodedText.replace(/\D/g, ''));
-                    }
+                    duplicatasRemovidas++;
                 }
-            },
-
-            onScanFailure: (error) => {
-                // Ignora erros normais de scan (quando não há QR no frame)
-                // console.warn('Scan error:', error);
+            });
+            
+            if (duplicatasRemovidas > 0) {
+                notas = notasUnicas;
+                salvarNotas();
+                renderNotas();
+                showAlert(`🧹 ${duplicatasRemovidas} duplicata(s) removida(s)!`, 'success');
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate(100);
+                }
+            } else {
+                showAlert('✅ Nenhuma duplicata!', 'info');
             }
-        };
+        }
 
-        const App = {
-            init: () => {
-                if (typeof Html5Qrcode === 'undefined') {
-                    alert('Erro ao carregar biblioteca. Recarregue a página.');
-                    return;
+        function updateStats() {
+            const stats = {
+                total: notas.length,
+                pendentes: notas.filter(n => !n.copiada).length,
+                copiadas: notas.filter(n => n.copiada).length
+            };
+
+            document.getElementById('total-count').textContent = stats.total;
+            document.getElementById('pending-count').textContent = stats.pendentes;
+            document.getElementById('copied-count').textContent = stats.copiadas;
+            
+            document.getElementById('filter-all').textContent = stats.total;
+            document.getElementById('filter-pending').textContent = stats.pendentes;
+            document.getElementById('filter-copied').textContent = stats.copiadas;
+            
+            updateScanCount();
+        }
+
+        function toggleCopiada(id) {
+            const nota = notas.find(n => n.id === id);
+            if (nota) {
+                nota.copiada = !nota.copiada;
+                salvarNotas();
+                renderNotas();
+            }
+        }
+
+        async function copiarChave(chave, id, event) {
+            try {
+                await navigator.clipboard.writeText(chave);
+                
+                const nota = notas.find(n => n.id === id);
+                if (nota) {
+                    nota.copiada = true;
+                    salvarNotas();
+                    renderNotas();
                 }
+                
+                const btn = event.target.closest('.btn-copy');
+                btn.classList.add('copied');
+                btn.textContent = '✓';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.textContent = '📋';
+                }, 1500);
+                
+                showAlert('✅ Copiada!', 'success');
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate(30);
+                }
+            } catch (error) {
+                showAlert('⚠️ Erro ao copiar', 'error');
+            }
+        }
 
-                DataManager.load();
-                App.render();
-                App.bindEvents();
-                Scanner.init();
-            },
-
-            render: () => {
-                Renderer.renderList();
-            },
-
-            bindEvents: () => {
-                UI.navList.addEventListener('click', () => Renderer.switchView('list'));
-                UI.navScan.addEventListener('click', () => Renderer.switchView('scan'));
-
-                UI.btnAddManual.addEventListener('click', App.handleManualAdd);
-                UI.inputManual.addEventListener('keydown', (e) => { 
-                    if (e.key === 'Enter') App.handleManualAdd(); 
-                });
-
-                UI.btnCopy.addEventListener('click', () => {
-                    if (State.notas.length === 0) {
-                        alert("Não há códigos para copiar.");
-                        return;
-                    }
-                    const textToCopy = State.notas.map(n => n.key).join('\n');
-                    Utils.copyToClipboard(textToCopy)
-                        .then(() => alert("Todos os códigos foram copiados!"))
-                        .catch(() => alert("Falha ao copiar."));
-                });
-
-                document.addEventListener('visibilitychange', () => {
-                    if (document.hidden && State.view === 'scan') {
-                        Scanner.stop();
-                    } else if (!document.hidden && State.view === 'scan') {
-                        Scanner.start();
-                    }
-                });
-            },
-
-            handleManualAdd: () => {
-                const val = UI.inputManual.value;
-                const key = Utils.extractKey(val);
-                if (key) {
-                    if (DataManager.addNote(key)) {
-                        UI.inputManual.value = '';
-                        App.render();
-                        Renderer.showScanFeedback("Adicionado", 'success');
-                    } else { 
-                        alert("Chave já registrada."); 
-                    }
-                } else { 
-                    alert("Formato inválido. Insira 44 números."); 
+        function deletarNota(id) {
+            if (confirm('Excluir esta nota?')) {
+                notas = notas.filter(n => n.id !== id);
+                salvarNotas();
+                renderNotas();
+                showAlert('🗑️ Excluída', 'info');
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
                 }
             }
-        };
+        }
 
-        document.addEventListener('DOMContentLoaded', App.init);
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.filter-btn.${filter}`).classList.add('active');
+            renderNotas();
+        }
+
+        function renderNotas() {
+            updateStats();
+
+            const notasFiltradas = notas.filter(n => {
+                if (currentFilter === 'pending') return !n.copiada;
+                if (currentFilter === 'copied') return n.copiada;
+                return true;
+            });
+
+            const container = document.getElementById('notas-list');
+            
+            if (notasFiltradas.length === 0) {
+                let mensagem = 'Nenhuma nota';
+                let submensagem = 'Inicie o scanner';
+                let icon = '⚡';
+                
+                if (currentFilter === 'pending') {
+                    mensagem = 'Nenhuma pendente';
+                    submensagem = 'Todas copiadas!';
+                    icon = '✅';
+                } else if (currentFilter === 'copied') {
+                    mensagem = 'Nenhuma copiada';
+                    submensagem = 'Copie para ver aqui';
+                    icon = '📋';
+                }
+                
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">${icon}</div>
+                        <div style="font-size: 18px; margin-bottom: 10px; font-weight: 600;">${mensagem}</div>
+                        <div style="font-size: 14px; opacity: 0.8;">${submensagem}</div>
+                        ${notas.length === 0 ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 10px;">Capacidade: ${MAX_STORAGE} notas</div>` : ''}
+                    </div>
+                `;
+            } else {
+                container.innerHTML = notasFiltradas.map(nota => `
+                    <div class="nota-card ${nota.copiada ? 'copiada' : ''}">
+                        <div class="checkbox ${nota.copiada ? 'checked' : ''}" onclick="toggleCopiada(${nota.id})"></div>
+                        <div class="nota-content">
+                            <div class="nota-chave">${formatarChave(nota.chave)}</div>
+                            <div class="nota-data">📅 ${nota.data}</div>
+                        </div>
+                        <div class="nota-actions">
+                            <button class="btn-action btn-copy" onclick="copiarChave('${nota.chave}', ${nota.id}, event)">📋</button>
+                            <button class="btn-action btn-delete" onclick="deletarNota(${nota.id})">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('bottom-actions').style.display = notas.length > 0 ? 'flex' : 'none';
+        }
+
+        function exportarNotas() {
+            const texto = notas
+                .filter(n => !n.copiada)
+                .map(n => n.chave)
+                .join('\n');
+            
+            if (!texto) {
+                showAlert('⚠️ Nenhuma pendente', 'info');
+                return;
+            }
+            
+            const blob = new Blob([texto], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const timestamp = new Date().toISOString().split('T')[0];
+            a.download = `notas-fiscais-${timestamp}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showAlert('📥 Exportado!', 'success');
+            
+            if (navigator.vibrate) {
+                navigator.vibrate(100);
+            }
+        }
+
+        function limparTodas() {
+            if (confirm(`Excluir TODAS as ${notas.length} notas?`)) {
+                notas = [];
+                salvarNotas();
+                renderNotas();
+                showAlert('🗑️ Todas excluídas', 'info');
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+            }
+        }
+
+        function openManualInput() {
+            document.getElementById('manual-input-modal').classList.add('active');
+            document.getElementById('manual-code').value = '';
+            updateCharCount();
+            setTimeout(() => {
+                document.getElementById('manual-code').focus();
+            }, 100);
+        }
+
+        function closeManualInput() {
+            document.getElementById('manual-input-modal').classList.remove('active');
+        }
+
+        function updateCharCount() {
+            const input = document.getElementById('manual-code');
+            const count = input.value.replace(/\D/g, '').length;
+            document.getElementById('char-count').textContent = count;
+            
+            if (count === 44) {
+                document.getElementById('char-count').style.color = '#10b981';
+            } else {
+                document.getElementById('char-count').style.color = '#667eea';
+            }
+        }
+
+        function handlePaste(event) {
+            event.preventDefault();
+            const pastedText = (event.clipboardData || window.clipboardData).getData('text');
+            const numbersOnly = pastedText.replace(/\D/g, '');
+            document.getElementById('manual-code').value = numbersOnly.substring(0, 44);
+            updateCharCount();
+        }
+
+        function addManualCode() {
+            const input = document.getElementById('manual-code');
+            const codigo = input.value.replace(/\D/g, '');
+            
+            if (codigo.length !== 44) {
+                showAlert('⚠️ Deve ter 44 dígitos', 'error');
+                return;
+            }
+            
+            if (notas.length >= MAX_STORAGE) {
+                showAlert('⚠️ Limite atingido!', 'error');
+                return;
+            }
+            
+            const existe = notas.find(n => n.chave === codigo);
+            if (existe) {
+                showAlert('⚠️ Já adicionada', 'info');
+                closeManualInput();
+                return;
+            }
+            
+            adicionarNota(codigo);
+            renderNotas();
+            closeManualInput();
+            showAlert('✅ Adicionada!', 'success');
+            
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }
+
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.add('show');
+            } else {
+                loading.classList.remove('show');
+            }
+        }
+
+        document.getElementById('manual-input-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeManualInput();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('manual-code');
+            if (input) {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        addManualCode();
+                    }
+                });
+            }
+        });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
     </script>
 </body>
 </html>
