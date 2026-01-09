@@ -4,18 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Scanner NFe Pro</title>
-    <!-- Carregando biblioteca ZXing via CDN -->
-   <script src="https://unpkg.com/@tonejs/midi@2.0.28/build/Midi.js"></script></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <style>
-        /* RESET & BASE */
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         
         :root {
             --bg-color: #ffffff;
             --text-color: #000000;
             --border-color: #000000;
-            --accent-color: #000000;
         }
 
         body {
@@ -30,17 +27,9 @@
             overflow: hidden;
         }
 
-        /* UTILITÁRIOS DE UI */
         .hidden { display: none !important; }
         .bold { font-weight: 700; }
-        .text-center { text-align: center; }
-        .flex { display: flex; }
-        .flex-col { flex-direction: column; }
-        .flex-center { justify-content: center; align-items: center; }
-        .w-full { width: 100%; }
-        .border-bottom { border-bottom: 2px solid var(--border-color); }
 
-        /* HEADER */
         header {
             padding: 1rem;
             border-bottom: 2px solid var(--border-color);
@@ -75,14 +64,12 @@
             cursor: pointer;
         }
 
-        /* CONTAINER PRINCIPAL */
         main {
             flex: 1;
             overflow-y: auto;
             position: relative;
         }
 
-        /* VIEW: SCANNER */
         #view-scanner {
             position: relative;
             height: 100%;
@@ -90,56 +77,41 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-        }
-
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .scan-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            display: flex;
-            justify-content: center;
             align-items: center;
         }
-        
-        .crop-guide {
-            width: 250px;
-            height: 250px;
-            border: 4px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5);
-            position: relative;
+
+        #qr-reader {
+            width: 100%;
+            max-width: 600px;
         }
 
-        .crop-guide::after {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 10px; height: 10px;
-            background: rgba(255,255,255,0.3);
-            transform: translate(-50%, -50%);
+        #qr-reader video {
+            width: 100% !important;
+            border: none !important;
         }
 
         #scan-feedback {
             position: absolute;
             bottom: 20%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             color: #fff;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 4px;
             font-weight: bold;
+            font-size: 1rem;
             opacity: 0;
             transition: opacity 0.2s;
             pointer-events: none;
+            max-width: 80%;
+            text-align: center;
+            z-index: 100;
         }
         
         #scan-feedback.active { opacity: 1; }
+        #scan-feedback.success { background: rgba(0, 200, 0, 0.9); }
+        #scan-feedback.error { background: rgba(255, 50, 50, 0.9); }
+        #scan-feedback.warning { background: rgba(255, 150, 0, 0.9); }
 
-        /* VIEW: LISTA */
         #view-list {
             padding-bottom: 80px;
         }
@@ -213,7 +185,6 @@
             line-height: 1;
         }
 
-        /* NAVIGATION / CONTROLS */
         nav {
             position: fixed;
             bottom: 0; left: 0; width: 100%;
@@ -247,17 +218,21 @@
             background: #fff;
             opacity: 0;
             pointer-events: none;
-            z-index: 100;
+            z-index: 99;
             transition: opacity 0.1s;
         }
 
+        /* Esconder botões e textos desnecessários da biblioteca */
+        #qr-reader__dashboard_section_csr button,
+        #qr-reader__camera_permission_button {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
 
     <div id="flash-overlay"></div>
 
-    <!-- Header com Botão Copiar -->
     <header>
         <h1>NFe Scanner</h1>
         <div class="header-controls">
@@ -267,27 +242,19 @@
     </header>
 
     <main>
-        <!-- VIEW: LISTA -->
         <section id="view-list">
             <div id="manual-input-area">
                 <input type="text" id="input-manual" placeholder="Chave de 44 dígitos" inputmode="numeric">
                 <button id="btn-add-manual" class="nav-btn">OK</button>
             </div>
-            <div id="notes-container">
-                <!-- Lista renderizada via JS -->
-            </div>
+            <div id="notes-container"></div>
             <div id="empty-msg" class="empty-state">
                 <p>Nenhuma nota registrada.</p>
             </div>
         </section>
 
-        <!-- VIEW: SCANNER -->
         <section id="view-scanner" class="hidden">
-            <video id="video-feed" playsinline muted></video>
-            <canvas id="scan-canvas" class="hidden"></canvas>
-            <div class="scan-overlay">
-                <div class="crop-guide"></div>
-            </div>
+            <div id="qr-reader"></div>
             <div id="scan-feedback">Registrado</div>
         </section>
     </main>
@@ -298,28 +265,22 @@
     </nav>
 
     <script>
-        /**
-         * 1. CONFIG
-         */
         const Config = {
-            STORAGE_KEY: 'notas-fiscais-ultra-zxing',
-            SCAN_COOLDOWN: 400,
+            STORAGE_KEY: 'notas-fiscais-html5qr',
+            SCAN_COOLDOWN: 500,
             KEY_REGEX: /\d{44}/,
-            MAX_STORAGE_ITEMS: 1500
+            MAX_STORAGE_ITEMS: 1500,
+            NO_KEY_COOLDOWN: 2000
         };
 
-        /**
-         * 2. STATE
-         */
         const State = {
             notas: [],
-            scanSession: { active: false },
-            view: 'list'
+            view: 'list',
+            lastInvalidScan: 0,
+            lastScannedCode: null,
+            lastScanTime: 0
         };
 
-        /**
-         * 3. UI (CACHE)
-         */
         const UI = {
             viewList: document.getElementById('view-list'),
             viewScan: document.getElementById('view-scanner'),
@@ -329,21 +290,17 @@
             emptyMsg: document.getElementById('empty-msg'),
             statsCounter: document.getElementById('stats-counter'),
             btnCopy: document.getElementById('btn-copy'),
-            video: document.getElementById('video-feed'),
-            canvas: document.getElementById('scan-canvas'),
             inputManual: document.getElementById('input-manual'),
             btnAddManual: document.getElementById('btn-add-manual'),
             scanFeedback: document.getElementById('scan-feedback'),
             flashOverlay: document.getElementById('flash-overlay')
         };
 
-        /**
-         * 4. UTILS
-         */
         const Utils = {
             extractKey: (text) => {
                 if (!text) return null;
-                const match = text.match(Config.KEY_REGEX);
+                const cleaned = text.replace(/\D/g, '');
+                const match = cleaned.match(/\d{44}/);
                 return match ? match[0] : null;
             },
             formatKeyDisplay: (key) => key.replace(/(.{4})/g, '$1 ').trim(),
@@ -363,9 +320,6 @@
             }
         };
 
-        /**
-         * 5. DATA MANAGER
-         */
         const DataManager = {
             load: () => {
                 try {
@@ -391,16 +345,9 @@
             removeNote: (id) => {
                 State.notas = State.notas.filter(n => n.id !== id);
                 DataManager.save();
-            },
-            clearAll: () => {
-                State.notas = [];
-                DataManager.save();
             }
         };
 
-        /**
-         * 6. RENDERER
-         */
         const Renderer = {
             updateStats: () => {
                 UI.statsCounter.textContent = State.notas.length.toString();
@@ -454,10 +401,10 @@
                 UI.flashOverlay.style.opacity = '0.6';
                 setTimeout(() => UI.flashOverlay.style.opacity = '0', 100);
             },
-            showScanFeedback: (text) => {
+            showScanFeedback: (text, type = 'success') => {
                 UI.scanFeedback.textContent = text;
-                UI.scanFeedback.classList.add('active');
-                setTimeout(() => UI.scanFeedback.classList.remove('active'), 1500);
+                UI.scanFeedback.className = 'active ' + type;
+                setTimeout(() => UI.scanFeedback.classList.remove('active'), type === 'error' ? 2500 : 1500);
             },
             switchView: (viewName) => {
                 State.view = viewName;
@@ -478,100 +425,98 @@
             }
         };
 
-        /**
-         * 7. SCANNER (CORE)
-         */
         const Scanner = {
-            stream: null,
-            codeReader: null,
-            lastCode: null,
-            lastScanTime: 0,
-            rafId: null,
+            html5QrCode: null,
+            isScanning: false,
 
             init: () => {
-                Scanner.codeReader = new ZXing.BrowserMultiFormatReader();
+                Scanner.html5QrCode = new Html5Qrcode("qr-reader");
             },
 
             start: async () => {
-                State.scanSession.active = true;
+                if (Scanner.isScanning) return;
+                
                 try {
-                    Scanner.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                    UI.video.srcObject = Scanner.stream;
-                    UI.video.setAttribute("playsinline", true);
-                    UI.video.play();
-                    UI.video.addEventListener('loadeddata', Scanner.loop, { once: true });
+                    await Scanner.html5QrCode.start(
+                        { facingMode: "environment" },
+                        {
+                            fps: 10,
+                            qrbox: { width: 250, height: 250 }
+                        },
+                        Scanner.onScanSuccess,
+                        Scanner.onScanFailure
+                    );
+                    Scanner.isScanning = true;
                 } catch (err) {
-                    console.error(err);
-                    alert("Erro ao acessar câmera.");
+                    console.error("Erro ao iniciar scanner:", err);
+                    alert("Erro ao acessar câmera. Verifique as permissões.");
                     Renderer.switchView('list');
                 }
             },
 
-            stop: () => {
-                State.scanSession.active = false;
-                if (Scanner.rafId) cancelAnimationFrame(Scanner.rafId);
-                if (Scanner.stream) {
-                    Scanner.stream.getTracks().forEach(track => track.stop());
-                    Scanner.stream = null;
-                }
-            },
-
-            loop: () => {
-                if (!State.scanSession.active) return;
-                if (document.hidden) { Scanner.rafId = requestAnimationFrame(Scanner.loop); return; }
-
-                const video = UI.video;
-                const canvas = UI.canvas;
-                const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-                if (video.readyState >= video.HAVE_ENOUGH_DATA) {
-                    const width = video.videoWidth;
-                    const height = video.videoHeight;
-                    const size = Math.min(width, height);
-                    
-                    if (canvas.width !== size) { canvas.width = size; canvas.height = size; }
-
-                    const sx = (width - size) / 2;
-                    const sy = (height - size) / 2;
-                    ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
-
-                    try {
-                        const imageData = ctx.getImageData(0, 0, size, size);
-                        const result = Scanner.codeReader.decodeFromImageData(imageData);
-                        if (result) Scanner.handleResult(result.text);
-                    } catch (e) { /* Ignora erros de frame sem código */ }
-                }
-                Scanner.rafId = requestAnimationFrame(Scanner.loop);
-            },
-
-            handleResult: (rawText) => {
-                const now = Date.now();
-                if (now - Scanner.lastScanTime < Config.SCAN_COOLDOWN) return;
-
-                const key = Utils.extractKey(rawText);
+            stop: async () => {
+                if (!Scanner.isScanning) return;
                 
-                if (key && (key !== Scanner.lastCode)) {
-                    Scanner.lastScanTime = now;
-                    Scanner.lastCode = key;
+                try {
+                    await Scanner.html5QrCode.stop();
+                    Scanner.isScanning = false;
+                } catch (err) {
+                    console.error("Erro ao parar scanner:", err);
+                }
+            },
 
-                    if (DataManager.addNote(key)) {
-                        Renderer.flashScan();
-                        Utils.vibrate(200);
-                        Renderer.showScanFeedback("Registrado!");
-                        Renderer.updateStats();
-                    } else {
-                        Renderer.showScanFeedback("Duplicado");
-                        Utils.vibrate(50);
+            onScanSuccess: (decodedText, decodedResult) => {
+                const now = Date.now();
+                
+                // Cooldown entre scans
+                if (now - State.lastScanTime < Config.SCAN_COOLDOWN) return;
+
+                const key = Utils.extractKey(decodedText);
+                
+                if (key) {
+                    // ENCONTROU 44 DÍGITOS
+                    if (key !== State.lastScannedCode) {
+                        State.lastScanTime = now;
+                        State.lastScannedCode = key;
+
+                        if (DataManager.addNote(key)) {
+                            Renderer.flashScan();
+                            Utils.vibrate(200);
+                            Renderer.showScanFeedback("✓ Registrado!", 'success');
+                            Renderer.updateStats();
+                        } else {
+                            Renderer.showScanFeedback("⚠ Já cadastrada", 'warning');
+                            Utils.vibrate(50);
+                        }
+                    }
+                } else {
+                    // LEU QR CODE MAS NÃO ACHOU 44 DÍGITOS
+                    if (now - State.lastInvalidScan > Config.NO_KEY_COOLDOWN) {
+                        State.lastInvalidScan = now;
+                        State.lastScanTime = now;
+                        
+                        Utils.vibrate([50, 100, 50]);
+                        Renderer.showScanFeedback("✗ Código inválido\n(Precisa ter 44 dígitos)", 'error');
+                        
+                        console.log('QR lido:', decodedText);
+                        console.log('Apenas números:', decodedText.replace(/\D/g, ''));
                     }
                 }
+            },
+
+            onScanFailure: (error) => {
+                // Ignora erros normais de scan (quando não há QR no frame)
+                // console.warn('Scan error:', error);
             }
         };
 
-        /**
-         * 8. APP (CONTROLLER)
-         */
         const App = {
             init: () => {
+                if (typeof Html5Qrcode === 'undefined') {
+                    alert('Erro ao carregar biblioteca. Recarregue a página.');
+                    return;
+                }
+
                 DataManager.load();
                 App.render();
                 App.bindEvents();
@@ -583,30 +528,31 @@
             },
 
             bindEvents: () => {
-                // Navegação
                 UI.navList.addEventListener('click', () => Renderer.switchView('list'));
                 UI.navScan.addEventListener('click', () => Renderer.switchView('scan'));
 
-                // Input Manual
                 UI.btnAddManual.addEventListener('click', App.handleManualAdd);
-                UI.inputManual.addEventListener('keydown', (e) => { if (e.key === 'Enter') App.handleManualAdd(); });
+                UI.inputManual.addEventListener('keydown', (e) => { 
+                    if (e.key === 'Enter') App.handleManualAdd(); 
+                });
 
-                // Copiar Todos
                 UI.btnCopy.addEventListener('click', () => {
                     if (State.notas.length === 0) {
                         alert("Não há códigos para copiar.");
                         return;
                     }
-                    const textToCopy = State.notas.map(n => n.key).join('\n'); // Um embaixo do outro
+                    const textToCopy = State.notas.map(n => n.key).join('\n');
                     Utils.copyToClipboard(textToCopy)
                         .then(() => alert("Todos os códigos foram copiados!"))
                         .catch(() => alert("Falha ao copiar."));
                 });
 
-                // Lifecycle
                 document.addEventListener('visibilitychange', () => {
-                    if (document.hidden && State.view === 'scan') Scanner.stop();
-                    else if (!document.hidden && State.view === 'scan') Scanner.start();
+                    if (document.hidden && State.view === 'scan') {
+                        Scanner.stop();
+                    } else if (!document.hidden && State.view === 'scan') {
+                        Scanner.start();
+                    }
                 });
             },
 
@@ -617,9 +563,13 @@
                     if (DataManager.addNote(key)) {
                         UI.inputManual.value = '';
                         App.render();
-                        Renderer.showScanFeedback("Adicionado");
-                    } else { alert("Chave já registrada."); }
-                } else { alert("Formato inválido. Insira 44 números."); }
+                        Renderer.showScanFeedback("Adicionado", 'success');
+                    } else { 
+                        alert("Chave já registrada."); 
+                    }
+                } else { 
+                    alert("Formato inválido. Insira 44 números."); 
+                }
             }
         };
 
